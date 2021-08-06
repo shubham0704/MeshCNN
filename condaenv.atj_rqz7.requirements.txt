@@ -1,0 +1,2 @@
+git+https://github.com/lanpa/tensorboardX.git
+pytest==5.1.1

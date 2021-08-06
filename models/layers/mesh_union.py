@@ -6,10 +6,12 @@ class MeshUnion:
     def __init__(self, n, device=torch.device('cpu')):
         self.__size = n
         self.rebuild_features = self.rebuild_features_average
-        self.groups = torch.eye(n, device=device)
+        self.groups = torch.eye(n, device=device) # # groups = 33 x 33 identity matrix
 
     def union(self, source, target):
-        self.groups[target, :] += self.groups[source, :]
+        self.groups[target, :] += self.groups[source, :] 
+        # groups[19, :], (1 x 33)  += groups[20, :], (1 x 33), we have entry  of value 1 and 19 and 20 position
+        # at groups[19, :]
 
     def remove_group(self, index):
         return

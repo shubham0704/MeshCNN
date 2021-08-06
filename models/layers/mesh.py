@@ -24,29 +24,29 @@ class Mesh:
         return self.features
 
     def merge_vertices(self, edge_id):
-        self.remove_edge(edge_id)
-        edge = self.edges[edge_id]
-        v_a = self.vs[edge[0]]
-        v_b = self.vs[edge[1]]
+        self.remove_edge(edge_id) # remove edge 19, vs-> 12, 13 remove entry of edge_id 19 from them
+        edge = self.edges[edge_id] # [12, 13]
+        v_a = self.vs[edge[0]] # [-0.333333,  0.      ,  0.333333] actual physical location
+        v_b = self.vs[edge[1]] # [-0.333333,  0.      , -0.333333]
         # update pA
-        v_a.__iadd__(v_b)
-        v_a.__itruediv__(2)
-        self.v_mask[edge[1]] = False
-        mask = self.edges == edge[1]
+        v_a.__iadd__(v_b) # [-0.6666666, 0, 0]
+        v_a.__itruediv__(2) # # [-0.333333, 0, 0]
+        self.v_mask[edge[1]] = False # v_mask[13] = 0
+        mask = self.edges == edge[1] # mask = all zeros except at index 13
         self.ve[edge[0]].extend(self.ve[edge[1]])
-        self.edges[mask] = edge[0]
+        self.edges[mask] = edge[0] # whereever node 13 was being use use node 12 use node F at all places instead of J
 
     def remove_vertex(self, v):
         self.v_mask[v] = False
 
     def remove_edge(self, edge_id):
-        vs = self.edges[edge_id]
+        vs = self.edges[edge_id] # 18 -> [13, 14]
         for v in vs:
             if edge_id not in self.ve[v]:
                 print(self.ve[v])
                 print(self.filename)
-            self.ve[v].remove(edge_id)
-
+            self.ve[v].remove(edge_id) # each vertex has 6 edges its associated to, we remove association with required edge.
+            # 13 -> {e1, e2, .., 18} -> {e1, e2, ...} without 18
     def clean(self, edges_mask, groups):
         edges_mask = edges_mask.astype(bool)
         torch_mask = torch.from_numpy(edges_mask.copy())
@@ -141,12 +141,19 @@ class Mesh:
                 cycles[-1].append(next_key)
         return cycles
 
+    def get_cycle(self, gemm, edge_id):
+        return self.__get_cycle(gemm, edge_id)
+
     def __cycle_to_face(self, cycle, v_indices):
         face = []
         for i in range(3):
             v = list(set(self.edges[cycle[i]]) & set(self.edges[cycle[(i + 1) % 3]]))[0]
             face.append(v_indices[v])
         return face
+
+    def cycle_to_face(self, cycle, v_indices):
+        return self.__cycle_to_face(cycle, v_indices)
+    
 
     def init_history(self):
         self.history_data = {

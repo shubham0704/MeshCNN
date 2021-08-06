@@ -2,7 +2,7 @@ import torch
 from . import networks
 from os.path import join
 from util.util import seg_accuracy, print_network
-
+import pdb
 
 class ClassifierModel:
     """ Class for training Model weights
@@ -43,6 +43,7 @@ class ClassifierModel:
             self.load_network(opt.which_epoch)
 
     def set_input(self, data):
+        # pdb.set_trace()
         input_edge_features = torch.from_numpy(data['edge_features']).float()
         labels = torch.from_numpy(data['label']).long()
         # set inputs

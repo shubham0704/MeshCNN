@@ -1,10 +1,12 @@
 import numpy as np
 import os
 import ntpath
-
+import pdb
+from pprint import pprint
 
 def fill_mesh(mesh2fill, file: str, opt):
     load_path = get_mesh_path(file, opt.num_aug)
+    mesh_data = from_scratch(file, opt)
     if os.path.exists(load_path):
         mesh_data = np.load(load_path, encoding='latin1', allow_pickle=True)
     else:
@@ -83,6 +85,7 @@ def fill_from_file(mesh, file):
     f.close()
     vs = np.asarray(vs)
     faces = np.asarray(faces, dtype=int)
+
     assert np.logical_and(faces >= 0, faces < len(vs)).all()
     return vs, faces
 
@@ -92,6 +95,7 @@ def remove_non_manifolds(mesh, faces):
     edges_set = set()
     mask = np.ones(len(faces), dtype=bool)
     _, face_areas = compute_face_normals_and_areas(mesh, faces)
+    
     for face_id, face in enumerate(faces):
         if face_areas[face_id] == 0:
             mask[face_id] = False
@@ -110,7 +114,12 @@ def remove_non_manifolds(mesh, faces):
         else:
             for idx, edge in enumerate(faces_edges):
                 edges_set.add(edge)
-    return faces[mask], face_areas[mask]
+    
+    # print(f'non manifold count: {np.sum(mask[mask == False])}')
+    # write mask
+    np.save(f'./temp/masks/{mesh.filename}_nonmanifold_mask.npy', mask) 
+    return faces, face_areas
+    # return faces[mask], face_areas[mask]
 
 
 def build_gemm(mesh, faces, face_areas):
@@ -159,7 +168,18 @@ def build_gemm(mesh, faces, face_areas):
     mesh.sides = np.array(sides, dtype=np.int64)
     mesh.edges_count = edges_count
     mesh.edge_areas = np.array(mesh.edge_areas, dtype=np.float32) / np.sum(face_areas) #todo whats the difference between edge_areas and edge_lenghts?
+    # print(f'mesh edges: {mesh.edges.shape}')
+    # print(f'gemm_edges: {mesh.gemm_edges.shape}')
+    # print(f'sides: {mesh.sides.shape}')
+    # print(f'edge areas: {mesh.edge_areas.shape}')
+    # print('edge2key:')
+    # pprint(edge2key)
+    # pprint('vertices:')
+    # pprint(mesh.vs)
+    # print('gemm edges')
+    # pprint(mesh.gemm_edges)
 
+    
 
 def compute_face_normals_and_areas(mesh, faces):
     face_normals = np.cross(mesh.vs[faces[:, 1]] - mesh.vs[faces[:, 0]],
@@ -310,11 +330,15 @@ def set_edge_lengths(mesh, edge_points=None):
 def extract_features(mesh):
     features = []
     edge_points = get_edge_points(mesh)
+    # print(edge_points)
     set_edge_lengths(mesh, edge_points)
+    feature_name = ['dihedral_angle', 'symmetric_opposite_angles', 'symmetric_ratios']
+    # print(f'edge points: {edge_points.shape}')
     with np.errstate(divide='raise'):
         try:
-            for extractor in [dihedral_angle, symmetric_opposite_angles, symmetric_ratios]:
+            for i, extractor in enumerate([dihedral_angle, symmetric_opposite_angles, symmetric_ratios]):
                 feature = extractor(mesh, edge_points)
+                # print(f'{feature_name[i]}: {feature.shape}')
                 features.append(feature)
             return np.concatenate(features, axis=0)
         except Exception as e:

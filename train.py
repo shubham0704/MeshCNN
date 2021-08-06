@@ -3,8 +3,9 @@ from options.train_options import TrainOptions
 from data import DataLoader
 from models import create_model
 from util.writer import Writer
+from util.edge_history import view_meshes, parse_mesh
 from test import run_test
-
+import pdb
 if __name__ == '__main__':
     opt = TrainOptions().parse()
     dataset = DataLoader(opt)
@@ -20,6 +21,21 @@ if __name__ == '__main__':
         iter_data_time = time.time()
         epoch_iter = 0
 
+        # at the beginning of training display the highlighted edges
+        obj_filename = "MIT_animation__meshes_bouncing__meshes__mesh_0000.obj"
+        for i, data in enumerate(dataset):
+            for mesh in data['mesh']:
+                if mesh.filename == obj_filename:
+                    break
+            if mesh.filename == obj_filename:
+                break
+        highlighted_edges_file = "/data/shubham/notebooks/coords.txt"
+        # now instead of passing data file it should directly accept mesh object
+        pdb.set_trace()
+        # a,b,c = parse_mesh(mesh, highlighted_edges_file, scale_by=0)
+        objects = [(mesh, highlighted_edges_file)]
+        view_meshes(*objects)
+        
         for i, data in enumerate(dataset):
             iter_start_time = time.time()
             if total_steps % opt.print_freq == 0:

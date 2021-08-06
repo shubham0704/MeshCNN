@@ -16,6 +16,8 @@ def is_mesh_file(filename):
     return any(filename.endswith(extension) for extension in MESH_EXTENSIONS)
 
 def pad(input_arr, target_length, val=0, dim=1):
+    # pdb.set_trace()
+    # print('tgt length:', target_length)
     shp = input_arr.shape
     npad = [(0, 0) for _ in range(len(shp))]
     npad[dim] = (0, target_length - shp[dim])

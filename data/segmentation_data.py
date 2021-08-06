@@ -4,7 +4,6 @@ from data.base_dataset import BaseDataset
 from util.util import is_mesh_file, pad
 import numpy as np
 from models.layers.mesh import Mesh
-
 class SegmentationData(BaseDataset):
 
     def __init__(self, opt):
@@ -14,6 +13,11 @@ class SegmentationData(BaseDataset):
         self.root = opt.dataroot
         self.dir = os.path.join(opt.dataroot, opt.phase)
         self.paths = self.make_dataset(self.dir)
+        # we want to analyze one mesh lets output the index of that mesh
+        # mesh_name = "datasets/human_seg/train/MIT_animation__meshes_bouncing__meshes__mesh_0000.obj"
+        mesh_name = "datasets/synthetic_tower_data/train/arm_00_neg_2_arm_20_pos_77_arm_10_pos_31_.obj"
+        idx = self.paths.index(mesh_name)
+        print("index of the mesh :", idx)
         self.seg_paths = self.get_seg_files(self.paths, os.path.join(self.root, 'seg'), seg_ext='.eseg')
         self.sseg_paths = self.get_seg_files(self.paths, os.path.join(self.root, 'sseg'), seg_ext='.seseg')
         self.classes, self.offset = self.get_n_segs(os.path.join(self.root, 'classes.txt'), self.seg_paths)
@@ -36,6 +40,7 @@ class SegmentationData(BaseDataset):
         meta['soft_label'] = pad(soft_label, self.opt.ninput_edges, val=-1, dim=0)
         # get edge features
         edge_features = mesh.extract_features()
+        # print('edge_features shape:', edge_features.shape)
         edge_features = pad(edge_features, self.opt.ninput_edges)
         meta['edge_features'] = (edge_features - self.mean) / self.std
         return meta
